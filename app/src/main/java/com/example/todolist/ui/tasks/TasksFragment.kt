@@ -9,6 +9,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,8 +17,11 @@ import com.example.todolist.R
 import com.example.todolist.data.SortOrder
 import com.example.todolist.data.Task
 import com.example.todolist.databinding.FragmentTasksBinding
+import com.example.todolist.util.exhaustive
 import com.example.todolist.util.onQueryTextchanged
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -40,7 +44,7 @@ class TasksFragment:Fragment(R.layout.fragment_tasks),TasksAdapter.OnItemClickLi
             }
 
             ItemTouchHelper(object :ItemTouchHelper.SimpleCallback(0,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT){
+            ItemTouchHelper.RIGHT){
                 override fun onMove(
                     recyclerView: RecyclerView,
                     viewHolder: RecyclerView.ViewHolder,
@@ -53,9 +57,33 @@ class TasksFragment:Fragment(R.layout.fragment_tasks),TasksAdapter.OnItemClickLi
                     viewModel.onTaskSwiped(task)
                 }
             }).attachToRecyclerView(recylerviewTasks)
+
+            fabAddTask.setOnClickListener {
+                viewModel.onAddNewTaskclick()
+            }
         }
         viewModel.tasks.observe(viewLifecycleOwner){
             tasksAdapter.submitList(it)
+        }
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
+            viewModel.taskEvent.collect {event->
+                when(event){
+                    is TaskViewModel.TaskEvent.ShowUndoDlelteMessage->{
+                     Snackbar.make(requireView(),"Task deleted",Snackbar.LENGTH_LONG)
+                         .setAction("UNDO"){
+                             viewModel.onUndoDeleteClick(event.task)
+                         }.show()
+                 }
+                    is TaskViewModel.TaskEvent.NavigateToAddTaskScreen -> {
+                        val action=TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(null,"New Task")
+                        findNavController().navigate(action)
+                    }
+                    is TaskViewModel.TaskEvent.NavigateToEditTaskScreen -> {
+                        val action=TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(task = event.task,"Edit Task")
+                        findNavController().navigate(action)
+                    }
+                }.exhaustive
+            }
         }
         setHasOptionsMenu(true)
     }
