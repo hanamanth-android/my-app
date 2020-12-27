@@ -16,7 +16,6 @@ class DeleteAllCompletedDailogFragment:DialogFragment() {
         .setNegativeButton("Cancel",null)
         .setPositiveButton("Yes"){_,_->
             deleteViewModel.onConfirmClick()
-
         }
         .create()
 }
