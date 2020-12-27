@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class TasksFragment:Fragment(R.layout.fragment_tasks),TasksAdapter.OnItemClickLister {
     private val viewModel:TaskViewModel by viewModels()
+    private lateinit var searchView:SearchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -91,6 +92,10 @@ class TasksFragment:Fragment(R.layout.fragment_tasks),TasksAdapter.OnItemClickLi
                     is TaskViewModel.TaskEvent.ShowTaskSavedConfirmationMessage -> {
                         Snackbar.make(requireView(),event.msg,Snackbar.LENGTH_SHORT).show()
                     }
+                    TaskViewModel.TaskEvent.NavigateTodeleteAllCompletedScreen -> {
+                        val actoin=TasksFragmentDirections.actionGlobalDeleteAllCompletedDailogFragment()
+                        findNavController().navigate(actoin)
+                    }
                 }.exhaustive
             }
         }
@@ -109,7 +114,12 @@ class TasksFragment:Fragment(R.layout.fragment_tasks),TasksAdapter.OnItemClickLi
         inflater.inflate(R.menu.menu_fragment_tasks,menu)
 
         val searchItem=menu.findItem(R.id.action_search)
-        val searchView=searchItem.actionView as SearchView
+         searchView=searchItem.actionView as SearchView
+
+        val pendingQuery=viewModel.searchQuery.value
+        if (pendingQuery != null && pendingQuery.isNotEmpty()){
+            searchView.setQuery(pendingQuery,false)
+        }
 
         searchView.onQueryTextchanged {
             //update search query
@@ -132,15 +142,20 @@ class TasksFragment:Fragment(R.layout.fragment_tasks),TasksAdapter.OnItemClickLi
                 true
             }
             R.id.actin_hide_complted->{
-                item.isChecked=!item.isChecked
+                item.isChecked= !item.isChecked
                 viewModel.onHideCompletedClick(item.isChecked)
                 true
             }
             R.id.action_delete_all_complted->{
-
+                viewModel.onDeleteAllCompletedClick()
                 true
             }
             else->super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        searchView.setOnQueryTextListener(null)
     }
 }

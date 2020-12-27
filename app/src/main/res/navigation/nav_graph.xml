@@ -28,4 +28,8 @@
             android:name="title"
             app:argType="string" />
     </fragment>
+    <fragment
+        android:id="@+id/deleteAllCompletedDailogFragment"
+        android:name="com.example.todolist.ui.deleteAllCompleted.DeleteAllCompletedDailogFragment"
+        android:label="DeleteAllCompletedDailogFragment" /><action android:id="@+id/action_global_deleteAllCompletedDailogFragment" app:destination="@id/deleteAllCompletedDailogFragment"/>
 </navigation>
